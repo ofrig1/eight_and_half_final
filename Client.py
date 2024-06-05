@@ -244,7 +244,7 @@ def handle_server_connection():
                 print("Unexpected message")
                 logging.warning("Unexpected message")
         except ConnectionResetError as e:
-            logging.error(f"Connection was reset: %s",e)
+            logging.error(f"Connection was reset: %s", e)
             raise
         except Exception as e:
             stack_trace = traceback.format_exc()

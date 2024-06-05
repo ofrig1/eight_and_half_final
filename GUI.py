@@ -1,14 +1,18 @@
+"""
+author: Ofri Guz
+Date: 01/06/24
+description: GUI class that handles graphics
+"""
 import pygame
 import sys
-
 import Welcome
 
 #  constants
 GHOST = 10
 HALF = 11
 ZERO = 0
-CARD_WIDTH = 120
-CARD_HEIGHT = 150
+CARD_WIDTH = 120  # Width of a card
+CARD_HEIGHT = 150  # Height of a card
 REFRESH_RATE = 60
 CLOCK = pygame.time.Clock()
 WHITE = (255, 255, 255)

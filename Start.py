@@ -1,3 +1,8 @@
+"""
+author: Ofri Guz
+Date: 01/06/24
+description: start class that prepares decks for game
+"""
 import random
 
 

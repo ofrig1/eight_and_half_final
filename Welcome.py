@@ -1,6 +1,12 @@
+"""
+author: Ofri Guz
+Date: 01/06/24
+description: WelcomePage class that handles opening page
+"""
 import pygame
 import sys
 
+#  constants
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 SCREEN_WIDTH = 900
@@ -65,7 +71,7 @@ class WelcomePage:
             "The 3 Wild Cards: Ghost - The Ghost can be played on any number. It is an",
             "\"invisible\" card that leaves the discard pile unchanged. The next player",
             "should refer to the card underneath. Half - Half may be played on any",
-            "number except \"Eight and a Half\" (see \"The Rules of Eight and a Half\").",
+            "number except \"Eight and a Half\" .",
             "It \"sticks\" to the number on which it is played and raises the discard",
             "pile by half. Zero - 0 can be played on any whole number. It zeros the",
             "discard pile and the next player may play any number or wild card. 0 cannot",

@@ -11,15 +11,15 @@ import Start
 import Protocol
 
 # constants
-SERVER_IP = '0.0.0.0'
-SERVER_PORT = 8820
+SERVER_IP = '0.0.0.0'  # Server IP address
+SERVER_PORT = 8820  # Server port number
 LISTEN_SIZE = 5
-SEPERATOR = '$'
+SEPERATOR = '$'  # Separator used in messages
 
-# global
+# global variables
 current_player = 0
 num_of_players = 0
-game_state = "WAITING"
+game_state = "WAITING"  # Variable to store the current state of the game
 
 
 def send_deck_to_all_clients(decks, open_client_sockets, msg_type):
@@ -286,11 +286,20 @@ def main():
     gets num of players and calls main loop - for the game to start
     """
     global num_of_players
-    num_of_players = int(input("How many people are playing? "))
-    # makes sure # of players is valid (2-4)
-    while num_of_players < 2 or num_of_players > 4:
-        print("Invalid number of participants")
-        num_of_players = int(input("How many people are playing? "))
+    while True:
+        num_of_players_str = input("How many people are playing? ")
+        if num_of_players_str == "":
+            num_of_players = 2  # default number of players
+            break
+        try:
+            num_of_players = int(num_of_players_str)
+            if 2 <= num_of_players <= 4:
+                break
+            else:
+                print("Invalid number of participants. Please enter a number between 2 and 4.")
+        except ValueError:
+            print("Invalid input. Please enter a number between 2 and 4.")
+    print(f"Number of players set to: {num_of_players}")
     main_loop()
 
 

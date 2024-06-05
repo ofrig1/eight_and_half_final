@@ -1,3 +1,8 @@
+"""
+author: Ofri Guz
+Date: 01/06/24
+description: game class that handles the game rules
+"""
 #  constants
 GHOST = 10
 HALF = 11
