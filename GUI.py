@@ -423,3 +423,35 @@ class GUI:
             self.screen.blit(card_image, self.two[i].topleft)
         pygame.display.flip()
         print(self.removed_cards)
+
+
+def check_assertions():
+    # Assertions
+
+    # Check if player number can be set and retrieved correctly
+    gui = GUI([], 1, [], [], None)
+    gui.set_player_num(2)
+    assert gui.get_player_num() == 2
+
+    # Check if deck setting and retrieval work correctly
+    decks = [1, 2, 3, 4, 5]
+    gui.set_deck(decks)
+    assert gui.get_deck() == decks
+
+    # Check if removed cards can be set and retrieved correctly
+    removed_cards = [6, 7, 8, 9, 10]
+    gui.set_removed_cards(removed_cards)
+    assert gui.get_removed_cards() == removed_cards
+
+    # Check if card pressed can be set and retrieved correctly
+    gui.set_card_pressed(3)
+    assert gui.get_card_pressed() == 3
+
+    # Check if discard pile can be set and retrieved correctly
+    discard_pile = [11, 12, 13]
+    gui.set_discard_pile(discard_pile)
+    assert gui.discard_pile == discard_pile
+
+
+if __name__ == '__main__':
+    check_assertions()

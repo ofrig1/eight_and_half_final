@@ -310,6 +310,7 @@ def main():
     """
     Sends messages to server and get responses
     """
+
     global gui
     global your_turn
     global game
@@ -438,4 +439,8 @@ def open_gui(cards_in_hand, deck, player_number):
 
 if __name__ == "__main__":
     logging.basicConfig(filename="client.log", level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s',)
+    # Test the lowest_card function
+    assert lowest_card([1, 2, 3, 4, 5, 6, 7, 8, 9]) == 1, "Test failed: Expected lowest yellow card to be 1"
+    assert lowest_card([]) == 15, "Test failed: Expected empty list to return 15"
+    assert lowest_card([10, 11, 12]) == 15, "Test failed: Expected no yellow cards to return 15"
     main()

@@ -290,5 +290,14 @@ def main():
 
 
 if __name__ == '__main__':
+    # Assertions
+
+    # Check if the starting player pick function returns a valid player number
+    assert pick_starting_player([3, 6, 2, 9]) in range(2, 5)
+
+    # Check if the is_full function correctly identifies if the messages array is full
+    assert not is_full([1, None, 3, 4])
+    assert is_full([1, 2, 3, 4])
+
     logging.basicConfig(filename="server.log", level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s',)
     main()
