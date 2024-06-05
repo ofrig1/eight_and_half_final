@@ -15,13 +15,13 @@ import logging
 import Welcome
 
 #  constants
-MAX_PACKET = 1024
-IP = '127.0.0.1'
-PORT = 8820
-SEPERATOR = '$'
-CARD_WIDTH = 120
-CARD_HEIGHT = 150
-CARD_PLACE_ROW = 400
+MAX_PACKET = 1024  # Maximum size of packet to be received
+IP = '127.0.0.1'  # Server IP address
+PORT = 8820  # Server port number
+SEPERATOR = '$'  # Separator used in messages
+CARD_WIDTH = 120  # Width of a card
+CARD_HEIGHT = 150  # Height of a card
+CARD_PLACE_ROW = 400  # Row position where cards are placed
 BUTTONS = [
             pygame.Rect(250, CARD_PLACE_ROW, CARD_WIDTH, CARD_HEIGHT),
             pygame.Rect(390, CARD_PLACE_ROW, CARD_WIDTH, CARD_HEIGHT),
@@ -31,20 +31,25 @@ TWO_BUTTONS = [
             pygame.Rect(320, CARD_PLACE_ROW, CARD_WIDTH, CARD_HEIGHT),
             pygame.Rect(460, CARD_PLACE_ROW, CARD_WIDTH, CARD_HEIGHT)]
 
-# global
-runs = True
-gui: GUI.GUI
-discard_pile = []
-saved_discard = []
-game: Game.GAME
-your_turn = False
-waiting_to_send = []
-client_socket: socket.socket
-current_deck = []
-game_state = None
+# global variables
+runs = True  # Flag to control the main loop
+gui: GUI.GUI  # GUI instance
+discard_pile = []  # List to store cards in the discard pile
+saved_discard = []  # List to store saved discarded cards
+game: Game.GAME  # Game instance
+your_turn = False  # Flag to indicate if it's the player's turn
+waiting_to_send = []  # List of messages waiting to be sent to the server
+client_socket: socket.socket  # Client socket
+current_deck = []  # List to store the current deck
+game_state = None  # Variable to store the current state of the game
 
 
 def receive_deck(message_str):
+    """
+        Receives the deck from the server message
+        :param message_str: String message from the server
+        :return: List of integers representing the deck
+    """
     # Check if the message is empty
     if not message_str:
         raise ValueError("Received empty message from server")
@@ -65,10 +70,9 @@ def receive_deck(message_str):
 
 def hand_out_cards(deck):
     """
-    Hand out first 3 cards to player
-    :param deck: personal deck (players cards)
-    :return: updated deck: (without the cards you handed out)
-    :return: removed: the cards in the players hand
+       Hand out first 3 cards to player
+       :param deck: List of integers representing the personal deck (player's cards)
+       :return: Tuple containing the updated deck and the cards in the player's hand
     """
     if len(deck) >= 3:
         # Remove first 3 cards and store them in a list
@@ -84,7 +88,7 @@ def hand_out_cards(deck):
 def send_message(my_socket, msg_type, current_card, did_win, player, did_turn):
     """
     sends message to server
-    :param my_socket:
+    :param my_socket: Socket to send the message through
     :param msg_type: message type
     :param current_card: Card played
     :param did_win: Whether the player won the game
@@ -106,7 +110,6 @@ def add_to_waiting_list(msg_type, current_card, did_win, player, did_turn):
     :param did_win: Whether the player won the game
     :param player: Number Player
     :param did_turn: Whether the player did a move
-    :return:
     """
     global waiting_to_send
     message = f"{msg_type}${current_card}${did_win}${player}${did_turn}"
@@ -116,9 +119,9 @@ def add_to_waiting_list(msg_type, current_card, did_win, player, did_turn):
 
 def lowest_card(cards_in_hand):
     """
-    Finds lowest yellow card in players hand
-    :param cards_in_hand: cards in players hand
-    :return: the lowest yellow card in players hand
+    Finds lowest yellow card in player's hand
+    :param cards_in_hand: cards in player's hand
+    :return: the lowest yellow card in player's hand or 15 if no yellow cards are found
     """
     lowest_card_value = 15
     for card in cards_in_hand:
@@ -156,6 +159,9 @@ def receive_update(message_str):
 
 
 def handle_client_messages():
+    """
+    Handles messages that need to be sent to the server
+    """
     global client_socket
     global waiting_to_send
     while True:
@@ -175,6 +181,9 @@ def handle_client_messages():
 
 
 def handle_server_connection():
+    """
+    Handles the connection to the server and processes incoming messages
+    """
     global runs
     global gui
     global discard_pile
@@ -229,6 +238,10 @@ def handle_server_connection():
 
 
 def handle_num_message(data):
+    """
+    Handles the NUM message from the server, setting the player number
+    :param data: String message from the server
+    """
     global gui
     player_num = data[4:]
     if gui is None:
@@ -241,6 +254,10 @@ def handle_num_message(data):
 
 
 def handle_update_message(data):
+    """
+    Handles the UPDATE message from the server
+    :param data: String message from the server
+    """
     global discard_pile, game, your_turn, saved_discard, gui, client_socket
     new_card_placed, did_win, player = receive_update(data)
     print("Current player: " + str(player) + " New card placed: " + new_card_placed)
@@ -278,6 +295,9 @@ def handle_update_message(data):
 
 
 def start_connection():
+    """
+    Starts the connection to the server and initializes threads for handling server connection and client messages
+    """
     connection_thread = threading.Thread(target=handle_server_connection)
     connection_thread.daemon = True  # This makes the thread exit when the main program exits
     connection_thread.start()
@@ -288,8 +308,7 @@ def start_connection():
 
 def main():
     """
-        Sends messages to server and get responses
-        :return:
+    Sends messages to server and get responses
     """
     global gui
     global your_turn
@@ -332,6 +351,10 @@ def main():
 
 
 def press_on_card(card_position):
+    """
+    Handles the event when a card is pressed by the player
+    :param card_position: Position of the card pressed
+    """
     global gui
     global game, your_turn, current_deck, game_state
 
@@ -387,11 +410,20 @@ def press_on_card(card_position):
 
 
 def stop_connection():
+    """
+    Stops the connection to the server
+    """
     global runs
     runs = False
 
 
 def open_gui(cards_in_hand, deck, player_number):
+    """
+    Opens and initializes the GUI
+    :param cards_in_hand: List of cards in hand
+    :param deck: List of cards in the deck
+    :param player_number: Player's number
+    """
     global gui
     global discard_pile
     gui = GUI.GUI(deck, player_number, cards_in_hand, discard_pile, "")

@@ -1,7 +1,7 @@
 """
 author: Ofri Guz
 Date: 01/06/24
-description: server which handles multiple clients by using select
+description: server that handles multiple clients by using select
 """
 import logging
 import socket
@@ -123,10 +123,10 @@ def receive_don_message(my_socket):
     Receive DON message from player that finished their turn
     :param my_socket:
     :return:
-    new_card_placed: the card they played
-    did_win: if they won
-    player: their player num
-    did_turn: if they had any valid cards and did their turn
+        new_card_placed: the card they played
+        did_win: if they won
+        player: their player num
+        did_turn: if they had any valid cards and did their turn
     """
     message_str = Protocol.protocol_receive(my_socket)
     logging.info('received msg: ' + message_str)
@@ -139,23 +139,11 @@ def receive_don_message(my_socket):
     return new_card_placed, did_win, int(player), did_turn
 
 
-def parse(msg):
-    parts = msg.split(SEPERATOR, 1)
-    if len(parts) < 1:
-        return "", ""
-    if len(parts) == 1:
-        return parts[0], ""
-    current_card = parts[0]
-    player = parts[1]
-    return current_card, player
-
-
 def send_client(client_socket, msg):
     """
-
+    send message to client
     :param client_socket:
-    :param msg:
-    :return:
+    :param msg: message to send
     """
     msg = Protocol.protocol_client_send(msg)
     logging.info('sending message: ' + msg)
@@ -163,6 +151,14 @@ def send_client(client_socket, msg):
 
 
 def turn(discard_pile, open_client_sockets, server_socket):
+    """
+    get a single turn from player and check if they won
+    send update (turn) to all players
+    :param discard_pile: the current discard pile
+    :param open_client_sockets: the connected players
+    :param server_socket: the server socket
+    :return:
+    """
     # send_new_card_to_all("Empty", False, current_player, open_client_sockets, "UPD")
     global current_player
     global game_state
@@ -193,6 +189,12 @@ def turn(discard_pile, open_client_sockets, server_socket):
 
 
 def is_full(messages):
+    """
+    Check if there's an empty message in messages array
+    Check if all players sent message
+    :param messages: array(the length of number of players) of messages received from players
+    :return:
+    """
     for message in messages:
         if message is None:
             return False
@@ -201,7 +203,7 @@ def is_full(messages):
 
 def main_loop():
     """
-    the main server loop, waits for messages from clients and acts according
+    main server loop, waits for messages from clients and acts according to game state
     :return: None, endless loop
     """
     global num_of_players, current_player, game_state
@@ -276,7 +278,7 @@ def main_loop():
 
 def main():
     """
-    Add Documentation here
+    gets num of players and calls main loop - for the game to start
     """
     global num_of_players
     num_of_players = int(input("How many people are playing? "))

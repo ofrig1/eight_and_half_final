@@ -71,7 +71,7 @@ class GAME:
         Find the value the discard pile is at now (if the last card played was a HALF)
         :return:
         """
-        i = 2
+        i = 3
         count = 1
         while self.second_last_card == GHOST or self.second_last_card == HALF:
             if self.second_last_card == HALF:
@@ -206,6 +206,9 @@ def test_game_class():
 
         game17 = GAME([8, HALF], GHOST, [1, 2, 4])
         assert game17.is_card_valid() is True, "Test scenario 17 failed"
+
+        game18 = GAME([5, HALF, HALF], 6, [1, 2, 4])
+        assert game18.is_card_valid() is True, "Test scenario 18 failed"
 
         print("All tests passed!")
     except AssertionError as e:
