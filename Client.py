@@ -42,6 +42,7 @@ waiting_to_send = []  # List of messages waiting to be sent to the server
 client_socket: socket.socket  # Client socket
 current_deck = []  # List to store the current deck
 game_state = None  # Variable to store the current state of the game
+welcome_page: Welcome.WelcomePage
 
 
 def receive_deck(message_str):
@@ -50,22 +51,25 @@ def receive_deck(message_str):
         :param message_str: String message from the server
         :return: List of integers representing the deck
     """
-    # Check if the message is empty
-    if not message_str:
-        raise ValueError("Received empty message from server")
+    try:
+        # Check if the message is empty
+        if not message_str:
+            raise ValueError("Received empty message from server")
 
-    # Check if the message starts with '$'
-    if not message_str.startswith('DEK$'):
-        raise ValueError("Invalid message format: Message does not start with 'DECKS$'")
-    # Remove the leading '$' character
-    message_str = message_str[4:]
-    # Convert the string back into a list of integers
-    if message_str:
-        message_list = list(map(int, message_str.split(SEPERATOR)))
-    else:
-        message_list = []
-
-    return message_list
+        # Check if the message starts with '$'
+        if not message_str.startswith('DEK$'):
+            raise ValueError("Invalid message format: Message does not start with 'DECKS$'")
+        # Remove the leading '$' character
+        message_str = message_str[4:]
+        # Convert the string back into a list of integers
+        if message_str:
+            message_list = list(map(int, message_str.split(SEPERATOR)))
+        else:
+            message_list = []
+        return message_list
+    except Exception as e:
+        logging.error("Error receiving deck: %s", e)
+        raise
 
 
 def hand_out_cards(deck):
@@ -96,10 +100,13 @@ def send_message(my_socket, msg_type, current_card, did_win, player, did_turn):
     :param did_turn: Whether the player did a move
     :return:
     """
-    message = f"{msg_type}${current_card}${did_win}${player}${did_turn}"
-    msg = Protocol.protocol_client_send(message)
-    logging.info('Sending message: ' + msg)
-    my_socket.send(msg.encode())
+    try:
+        message = f"{msg_type}${current_card}${did_win}${player}${did_turn}"
+        msg = Protocol.protocol_client_send(message)
+        logging.info('Sending message: %s', msg)
+        my_socket.send(msg.encode())
+    except Exception as e:
+        logging.error("Error sending message: %s", e)
 
 
 def add_to_waiting_list(msg_type, current_card, did_win, player, did_turn):
@@ -113,7 +120,7 @@ def add_to_waiting_list(msg_type, current_card, did_win, player, did_turn):
     """
     global waiting_to_send
     message = f"{msg_type}${current_card}${did_win}${player}${did_turn}"
-    logging.info('waiting to send ' + message)
+    logging.info('waiting to send %s', message)
     waiting_to_send.append(message)
 
 
@@ -141,7 +148,7 @@ def receive_update(message_str):
     if not message_str:
         raise ValueError("Received empty message from server")
 
-    logging.info('received message' + message_str)
+    logging.info('received message %s', message_str)
 
     # Check if the message starts with '$'
     if not message_str.startswith('UPD$'):
@@ -168,15 +175,19 @@ def handle_client_messages():
         try:
             if waiting_to_send is not None and len(waiting_to_send) > 0:
                 for message_to_send in waiting_to_send:
-                    message = Protocol.protocol_client_send(message_to_send)
-                    logging.info('message sending to server: ' + message)
-                    print("Message sending to server:", message)
-                    client_socket.send(message.encode())
-                    waiting_to_send.remove(message_to_send)
+                    try:
+                        message = Protocol.protocol_client_send(message_to_send)
+                        logging.info('message sending to server: %s', message)
+                        print("Message sending to server:", message)
+                        client_socket.send(message.encode())
+                        waiting_to_send.remove(message_to_send)
+                    except Exception as e:
+                        logging.error("Error in sending message loop: %s", e)
+                        time.sleep(5)
         except Exception as e:
             stack_trace = traceback.format_exc()
             print(stack_trace)
-            print(f"An error occurred: {e}")
+            print(f"Error handling client messages: {e}")
             time.sleep(5)  # Sleep for 5 seconds
 
 
@@ -198,16 +209,18 @@ def handle_server_connection():
         try:
             client_socket.connect((IP, PORT))
             print("Connected to server")
+            logging.info('Connected to server')
             break
         except Exception as e:
-            print(f"An error occurred: {e}")
+            print(f"Error connecting to server: {e}")
             time.sleep(5)  # Sleep for 2 seconds
     while runs:
         try:
             print("waiting to receive message from the server")
-            # data = client_socket.recv(1024).decode()
+            logging.info("waiting to receive message from the server")
             data = Protocol.protocol_receive(client_socket)
             print("Received from server:", data)
+            logging.info("Received from server: %s", data)
             if data.startswith('NUM$'):
                 handle_num_message(data)
 
@@ -219,6 +232,7 @@ def handle_server_connection():
                 print("Remaining deck:", deck)
                 if gui is None:
                     print("GUI IS NONE")
+                    logging.info("GUI IS NONE")
                 else:
                     gui.set_deck(deck)
                     print(gui.get_deck())
@@ -228,13 +242,14 @@ def handle_server_connection():
                 handle_update_message(data)
             else:
                 print("Unexpected message")
+                logging.warning("Unexpected message")
         except ConnectionResetError as e:
-            print(f"Connection was reset: {e}")
+            logging.error(f"Connection was reset: %s",e)
             raise
         except Exception as e:
             stack_trace = traceback.format_exc()
             print(stack_trace)
-            print(f"An error occurred: {e}")
+            logging.error("Error receiving data from server: %s", e)
 
 
 def handle_num_message(data):
@@ -242,15 +257,15 @@ def handle_num_message(data):
     Handles the NUM message from the server, setting the player number
     :param data: String message from the server
     """
-    global gui
+    global gui, welcome_page
     player_num = data[4:]
     if gui is None:
         print("GUI IS NONE")
+        logging.info("GUI IS NONE")
     else:
         player_num = int(player_num)
         gui.set_player_num(player_num)
         gui.draw_player_number(player_num)
-        # gui.draw_caption()
 
 
 def handle_update_message(data):
@@ -311,44 +326,53 @@ def main():
     Sends messages to server and get responses
     """
 
-    global gui
+    global gui, welcome_page
     global your_turn
     global game
-    open_gui("", "", 1)
-    if gui is None:
-        print("GUI IS NONE")
+    try:
+        open_gui("", "", 1)
+        if gui is None:
+            print("GUI IS NONE")
+            logging.info("GUI IS NONE")
+
     # ip = input("What ip address would you like to connect to? ")
     # start_connection(ip)
 
-    welcome_page = Welcome.WelcomePage(gui.get_player_num())
-    welcome_page.display()
-    while not welcome_page.get_start_game():
-        welcome_page.run_welcome_page()
-    welcome_page.restart_screen()
-    gui.create_screen()
-    start_connection()
-    running = True
-    while running:
-        for event in pygame.event.get():
-            # print("Your Turn: " + str(your_turn))
-            if event.type == pygame.QUIT:
-                running = False
-            elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and your_turn:
-                place = pygame.mouse.get_pos()
-                print("Game State: " + str(game_state))
-                if game_state == "TWO":
-                    for i, button_rect in enumerate(TWO_BUTTONS, start=1):
-                        if button_rect.collidepoint(place):
-                            press_on_card(i)
-                elif game_state == "ONE":
-                    if BUTTONS[1].collidepoint(place):
-                        press_on_card(1)
-                else:
-                    for i, button_rect in enumerate(BUTTONS, start=1):
-                        if button_rect.collidepoint(place):
-                            press_on_card(i)
-    pygame.quit()
-    stop_connection()
+        welcome_page = Welcome.WelcomePage(gui.get_player_num())
+        welcome_page.display()
+        while not welcome_page.get_start_game():
+            welcome_page.run_welcome_page()
+        welcome_page.restart_screen()
+        gui.create_screen()
+        start_connection()
+        running = True
+        while running:
+            try:
+                for event in pygame.event.get():
+                    # print("Your Turn: " + str(your_turn))
+                    if event.type == pygame.QUIT:
+                        running = False
+                    elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1 and your_turn:
+                        place = pygame.mouse.get_pos()
+                        print("Game State: " + str(game_state))
+                        if game_state == "TWO":
+                            for i, button_rect in enumerate(TWO_BUTTONS, start=1):
+                                if button_rect.collidepoint(place):
+                                    press_on_card(i)
+                        elif game_state == "ONE":
+                            if BUTTONS[1].collidepoint(place):
+                                press_on_card(1)
+                        else:
+                            for i, button_rect in enumerate(BUTTONS, start=1):
+                                if button_rect.collidepoint(place):
+                                    press_on_card(i)
+            except Exception as e:
+                logging.error(f"Error in main event loop: {e}")
+    except Exception as e:
+        logging.error(f"Error in main function: {e}")
+    finally:
+        pygame.quit()
+        stop_connection()
 
 
 def press_on_card(card_position):
@@ -359,55 +383,59 @@ def press_on_card(card_position):
     global gui
     global game, your_turn, current_deck, game_state
 
-    print(f"Pressed Card position :  {card_position}")
-    print("cards in hand:", gui.get_removed_cards())
-    gui.set_card_pressed(card_position)
-    card_value = gui.get_removed_cards()[gui.get_card_pressed() - 1]
-    print(f"card value:  {card_value}")
-    game = Game.GAME(discard_pile, card_value, gui.get_removed_cards())
-    print("Is card valid?", game.is_card_valid())
-
-    if game.is_card_valid():
-        gui.move_to_middle(gui.get_removed_cards(), gui.get_card_pressed())
-        # next_card = gui.replace_chosen_card(gui.get_card_pressed(), gui.get_removed_cards())
-        current_deck = gui.get_deck()
-        print("current deck: " + str(current_deck))
-
-        # gui.set_removed_cards(next_card)
+    try:
+        print(f"Pressed Card position :  {card_position}")
         print("cards in hand:", gui.get_removed_cards())
-        if current_deck:
-            next_card = gui.replace_chosen_card(gui.get_card_pressed(), gui.get_removed_cards())
-            gui.set_removed_cards(next_card)
-            gui.draw_new_card(gui.get_card_pressed())
-            print("updated order: cards in hand:", gui.get_removed_cards())
-            add_to_waiting_list("DON", card_value, False, gui.get_player_num(), True)
-        else:
-            if len(gui.get_removed_cards()) == 3:
-                gui.draw_two_cards()
-                gui.draw_player_number(gui.get_player_num())
-                game_state = "TWO"
+        gui.set_card_pressed(card_position)
+        card_value = gui.get_removed_cards()[gui.get_card_pressed() - 1]
+        print(f"card value:  {card_value}")
+        game = Game.GAME(discard_pile, card_value, gui.get_removed_cards())
+        print("Is card valid?", game.is_card_valid())
+
+        if game.is_card_valid():
+            gui.move_to_middle(gui.get_removed_cards(), gui.get_card_pressed())
+            # next_card = gui.replace_chosen_card(gui.get_card_pressed(), gui.get_removed_cards())
+            current_deck = gui.get_deck()
+            print("current deck: " + str(current_deck))
+
+            # gui.set_removed_cards(next_card)
+            print("cards in hand:", gui.get_removed_cards())
+            if current_deck:
+                next_card = gui.replace_chosen_card(gui.get_card_pressed(), gui.get_removed_cards())
+                gui.set_removed_cards(next_card)
+                gui.draw_new_card(gui.get_card_pressed())
+                print("updated order: cards in hand:", gui.get_removed_cards())
                 add_to_waiting_list("DON", card_value, False, gui.get_player_num(), True)
-            elif len(gui.get_removed_cards()) == 2:
-                gui.draw_last_cards()
-                gui.draw_player_number(gui.get_player_num())
-                add_to_waiting_list("DON", card_value, False, gui.get_player_num(), True)
-                game_state = "ONE"
             else:
-                gui.create_screen()
-                gui.draw_player_number(gui.get_player_num())
-                gui.move_to_middle(gui.get_removed_cards(), gui.get_card_pressed())
-                print("Player Won")
-                logging.info('Player Won')
-                add_to_waiting_list("DON", card_value, True, gui.get_player_num(), True)
-                print("End Game")
-        your_turn = False
-        gui.set_discard_pile(discard_pile)
-    else:
-        gui.display_message("Card Chosen INVALID")
-        gui.create_screen()
-        gui.print_cards(game_state)
-        # card_pressed = gui.choose_card()
-    print("game state: " + str(game_state))
+                if len(gui.get_removed_cards()) == 3:
+                    gui.draw_two_cards()
+                    gui.draw_player_number(gui.get_player_num())
+                    game_state = "TWO"
+                    add_to_waiting_list("DON", card_value, False, gui.get_player_num(), True)
+                elif len(gui.get_removed_cards()) == 2:
+                    gui.draw_last_cards()
+                    gui.draw_player_number(gui.get_player_num())
+                    add_to_waiting_list("DON", card_value, False, gui.get_player_num(), True)
+                    game_state = "ONE"
+                else:
+                    gui.create_screen()
+                    gui.draw_player_number(gui.get_player_num())
+                    gui.move_to_middle(gui.get_removed_cards(), gui.get_card_pressed())
+                    print("Player Won")
+                    logging.info('Player Won')
+                    add_to_waiting_list("DON", card_value, True, gui.get_player_num(), True)
+                    print("End Game")
+            your_turn = False
+            gui.set_discard_pile(discard_pile)
+        else:
+            gui.display_message("Card Chosen INVALID")
+            gui.create_screen()
+            gui.print_cards(game_state)
+            # card_pressed = gui.choose_card()
+        print("game state: " + str(game_state))
+        logging.info("game state: " + str(game_state))
+    except Exception as e:
+        logging.error(f"Error pressing card: {e}")
 
 
 def stop_connection():
@@ -430,11 +458,14 @@ def open_gui(cards_in_hand, deck, player_number):
     gui = GUI.GUI(deck, player_number, cards_in_hand, discard_pile, "")
     if gui is None:
         print("GUI IS NONE")
+        logging.info("GUI IS NONE")
     gui.create_screen()
     if gui is None:
         print("GUI IS NONE")
+        logging.info("GUI IS NONE")
     else:
         print("GUI IS NOT NONE")
+        logging.info("GUI IS NOT NONE")
 
 
 if __name__ == "__main__":

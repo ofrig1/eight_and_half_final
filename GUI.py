@@ -78,13 +78,6 @@ class GUI:
         """
         self.player_num = player_num
 
-    def draw_caption(self):
-        """
-        Draw the window caption with the player number.
-        """
-        pygame.display.set_caption("8 1/2 Player: " + str(self.player_num))
-        pygame.display.flip()
-
     def set_deck(self, decks):
         """
         Set deck of cards

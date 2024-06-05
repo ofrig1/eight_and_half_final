@@ -84,9 +84,9 @@ class WelcomePage:
             self.draw_rules_overlay()
         else:
             self.draw_text("Welcome to 8 1/2!", self.font_large, self.text_color, (self.screen_width // 2, 100))
-            self.draw_text(f"Player Number: {self.player_number}", self.font_medium, self.text_color,
+            self.draw_text("Waiting Lobby", self.font_medium, self.text_color,
                            (self.screen_width // 2, 200))
-            self.draw_text("You have joined the game!", self.font_small, self.text_color, (self.screen_width // 2, 300))
+            self.draw_text("By: Ofri", self.font_small, self.text_color, (self.screen_width // 2, 300))
 
             # Animate color rectangle
             color_rect = pygame.Rect(0, 400, self.screen_width, 100)
@@ -166,4 +166,13 @@ class WelcomePage:
         self.scroll_offset = 0
         self.current_color_index = 0
         pygame.display.set_caption('8 1/2')
+        pygame.display.flip()
+
+    def print_message(self, message):
+        """
+        Prints a message on the welcome page.
+        :param message: The message to print.
+        """
+        self.screen.fill(self.bg_color)
+        self.draw_text(message, self.font_small, self.text_color, (self.screen_width // 2, 400))
         pygame.display.flip()

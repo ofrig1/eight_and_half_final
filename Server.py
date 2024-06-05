@@ -86,6 +86,7 @@ def receive_low_message_type(client_socket, msg_type, messages):
             messages[int(player) - 1] = card_sent
     except socket.error as e:
         print(f"Socket error: {e}")
+        logging.error(f"Socket error: {e}")
     return messages
 
 
@@ -131,8 +132,10 @@ def receive_don_message(my_socket):
     message_str = Protocol.protocol_receive(my_socket)
     logging.info('received msg: ' + message_str)
     if not message_str:
+        logging.error("Received empty message from server")
         raise ValueError("Received empty message from server")
     if not message_str.startswith('DON$'):
+        logging.error("Invalid message format: Message does not start with 'DON$'")
         raise ValueError("Invalid message format: Message does not start with 'DON$'")
     message_str = message_str[4:]
     new_card_placed, did_win, player, did_turn = message_str.split(SEPERATOR)
@@ -174,6 +177,7 @@ def turn(discard_pile, open_client_sockets, server_socket):
     current_player = int(current_player)
     if player != current_player:
         print("Received from wrong player")
+        logging.info("Received from wrong player")
     else:
         if did_win_bool is False:
             current_player = (current_player % num_of_players) + 1
@@ -259,6 +263,7 @@ def main_loop():
                             print("All low messages received:", messages)
                             current_player = pick_starting_player(lowest_cards)
                             print("The starting player is player " + str(current_player))
+                            logging.info("The starting player is player " + str(current_player))
                             # send_play(current_player, msg_type, client_socket)
                             send_new_card_to_all("EMPTY", False, open_client_sockets, "UPD")
                             game_state = "PLAY"
@@ -266,12 +271,12 @@ def main_loop():
                         logging.info("IN PLAY")
                         turn(discard_pile, open_client_sockets, current_socket)
                     elif game_state == "WIN":
-                        logging.info("WIN")
+                        logging.info("IN WIN")
                     # send win message
                     #     exit()
 
     except socket.error as err:
-        logging.info('received socket error - exiting, ' + str(err))
+        logging.info('received socket error, ' + str(err))
     finally:
         server_socket.close()
 
